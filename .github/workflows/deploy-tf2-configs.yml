@@ -1,0 +1,50 @@
+name: Deploy TF2 Configs
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup SSH
+      run: |
+        mkdir -p ~/.ssh
+        echo "${{ secrets.WORKFLOW_SSH_KEY }}" > ~/.ssh/deploy_key
+        chmod 600 ~/.ssh/deploy_key
+        ssh-keyscan -p 2222 -H tf2.lumabyte.io >> ~/.ssh/known_hosts
+
+    - name: Deploy to server
+      env:
+        DEMOSTF_APIKEY: ${{ secrets.DEMOSTF_APIKEY }}
+        LOGSTF_APIKEY: ${{ secrets.LOGSTF_APIKEY }}
+        SV_PASSWORD: ${{ secrets.SV_PASSWORD }}
+        PUGA_RCON: ${{ secrets.PUGA_RCON }}
+        PUGB_RCON: ${{ secrets.PUGB_RCON }}
+        PUGA_HOSTNAME: ${{ vars.PUGA_HOSTNAME }}
+        PUGB_HOSTNAME: ${{ vars.PUGB_HOSTNAME }}
+      run: |
+        ssh -i ~/.ssh/deploy_key -p 2222 steam@tf2.lumabyte.io bash << 'EOF'
+          set -e
+          cd ~/servers/tf2/tf2-passtime-config
+          git pull origin main
+          export DEMOSTF_APIKEY='${{ secrets.DEMOSTF_APIKEY }}'
+          export LOGSTF_APIKEY='${{ secrets.LOGSTF_APIKEY }}'
+          export SV_PASSWORD='${{ secrets.SV_PASSWORD }}'
+          export PUGA_RCON='${{ secrets.PUGA_RCON }}'
+          export PUGB_RCON='${{ secrets.PUGB_RCON }}'
+          export PUGA_HOSTNAME='${{ vars.PUGA_HOSTNAME }}'
+          export PUGB_HOSTNAME='${{ vars.PUGB_HOSTNAME }}'
+          ./deploy.sh
+        EOF
+
+    - name: Cleanup
+      if: always()
+      run: rm -f ~/.ssh/deploy_key
+

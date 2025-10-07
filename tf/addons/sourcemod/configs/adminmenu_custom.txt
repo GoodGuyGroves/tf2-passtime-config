@@ -1,0 +1,6 @@
+// Custom admin menu commands.
+// For more information, visit http://wiki.alliedmods.net/Custom_Admin_Menu_%28SourceMod%29
+
+"Commands" {
+    
+}
