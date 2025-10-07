@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
 
-
 # Failing commands cause the script to exit immediately
 set -e
 # Errors on undefined variables
@@ -10,20 +9,23 @@ set -o pipefail
 
 debug_mode=0
 _debug() {
-    # _debug "${FUNCNAME[0]}" ""
     if (( "${debug_mode}" == 0 )); then
         printf "[DEBUG]\t $(date +%T) %s - %s\n" "${1}" "${2}"
     fi
 }
 
 _info() {
-    # _info "${FUNCNAME[0]}" ""
     printf "[INFO]\t $(date +%T) %s - %s\n" "${1}" "${2}"
 }
 
 _error() {
-    # _error "${FUNCNAME[0]}" ""
     printf "[ERROR]\t $(date +%T) %s - %s\n" "${1}" "${2}"
+}
+
+# Function to escape special characters for sed replacement string
+escape_for_sed() {
+    # Escape backslashes, forward slashes, ampersands, and newlines
+    printf '%s\n' "$1" | sed -e 's/[\/&]/\\&/g' | sed ':a;N;$!ba;s/\n/\\n/g'
 }
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -57,13 +59,20 @@ update_server_cfg() {
   local hostname="${!hostname_var:-changeme}"
     
   _debug "${FUNCNAME[0]}" "Updating $server_cfg..."
+  
+  # Escape special characters for sed
+  local hostname_escaped=$(escape_for_sed "$hostname")
+  local sv_password_escaped=$(escape_for_sed "$SV_PASSWORD")
+  local rcon_password_escaped=$(escape_for_sed "$rcon_password")
+  local demostf_apikey_escaped=$(escape_for_sed "$DEMOSTF_APIKEY")
+  local logstf_apikey_escaped=$(escape_for_sed "$LOGSTF_APIKEY")
     
-  # Use sed to replace the values
-  sed -i "s|^hostname[[:space:]]*\".*\"|hostname                       \"$hostname\"|" "$server_cfg"
-  sed -i "s|^sv_password[[:space:]]*\".*\"|sv_password                    \"$SV_PASSWORD\"|" "$server_cfg"
-  sed -i "s|^rcon_password[[:space:]]*\".*\"|rcon_password                  \"$rcon_password\"|" "$server_cfg"
-  sed -i "s|^sm_demostf_apikey[[:space:]]*\".*\"|sm_demostf_apikey              \"$DEMOSTF_APIKEY\"|" "$server_cfg"
-  sed -i "s|^logstf_apikey[[:space:]]*\".*\"|logstf_apikey                  \"$LOGSTF_APIKEY\"|" "$server_cfg"
+  # Use sed with | delimiter and escaped values
+  sed -i "s|^hostname[[:space:]]*\".*\"|hostname                       \"$hostname_escaped\"|" "$server_cfg"
+  sed -i "s|^sv_password[[:space:]]*\".*\"|sv_password                    \"$sv_password_escaped\"|" "$server_cfg"
+  sed -i "s|^rcon_password[[:space:]]*\".*\"|rcon_password                  \"$rcon_password_escaped\"|" "$server_cfg"
+  sed -i "s|^sm_demostf_apikey[[:space:]]*\".*\"|sm_demostf_apikey              \"$demostf_apikey_escaped\"|" "$server_cfg"
+  sed -i "s|^logstf_apikey[[:space:]]*\".*\"|logstf_apikey                  \"$logstf_apikey_escaped\"|" "$server_cfg"
 
   _debug "${FUNCNAME[0]}" "✓ Updated secrets in server.cfg"
     
@@ -77,6 +86,9 @@ update_rconrc() {
   local rcon_password=$2
   local hostname=$3
   local port=$4
+  
+  # Escape the password for sed
+  local rcon_password_escaped=$(escape_for_sed "$rcon_password")
     
   # Check if section exists, if not create it
   if ! grep -q "^\[$server_name\]" "$RCONRC" 2>/dev/null; then
@@ -91,7 +103,7 @@ EOF
   else
     # Update existing entry
     _debug "${FUNCNAME[0]}" "Updating rconrc entry for $server_name..."
-    sed -i "/^\[$server_name\]/,/^\[/ s|^password = .*|password = $rcon_password|" "$RCONRC"
+    sed -i "/^\[$server_name\]/,/^\[/ s|^password = .*|password = $rcon_password_escaped|" "$RCONRC"
   fi
 }
 

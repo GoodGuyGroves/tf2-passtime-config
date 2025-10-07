@@ -30,19 +30,20 @@ jobs:
         PUGA_HOSTNAME: ${{ vars.PUGA_HOSTNAME }}
         PUGB_HOSTNAME: ${{ vars.PUGB_HOSTNAME }}
       run: |
-        ssh -i ~/.ssh/deploy_key -p 2222 steam@tf2.lumabyte.io bash << 'EOF'
-          set -e
+        ssh -i ~/.ssh/deploy_key -p 2222 steam@tf2.lumabyte.io bash << 'ENDSSH'
+          export DEMOSTF_APIKEY="$DEMOSTF_APIKEY"
+          export LOGSTF_APIKEY="$LOGSTF_APIKEY"
+          export SV_PASSWORD="$SV_PASSWORD"
+          export PUGA_RCON="$PUGA_RCON"
+          export PUGB_RCON="$PUGB_RCON"
+          export PUGA_HOSTNAME="$PUGA_HOSTNAME"
+          export PUGB_HOSTNAME="$PUGB_HOSTNAME"
           cd ~/servers/tf2/tf2-passtime-config
+          git remote set-url origin https://github.com/${{ github.repository }}.git
           git pull origin main
-          export DEMOSTF_APIKEY='${{ secrets.DEMOSTF_APIKEY }}'
-          export LOGSTF_APIKEY='${{ secrets.LOGSTF_APIKEY }}'
-          export SV_PASSWORD='${{ secrets.SV_PASSWORD }}'
-          export PUGA_RCON='${{ secrets.PUGA_RCON }}'
-          export PUGB_RCON='${{ secrets.PUGB_RCON }}'
-          export PUGA_HOSTNAME='${{ vars.PUGA_HOSTNAME }}'
-          export PUGB_HOSTNAME='${{ vars.PUGB_HOSTNAME }}'
+          chmod +x deploy.sh
           ./deploy.sh
-        EOF
+        ENDSSH
 
     - name: Cleanup
       if: always()
