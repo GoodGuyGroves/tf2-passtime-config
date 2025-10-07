@@ -80,6 +80,21 @@ update_server_cfg() {
   echo "$rcon_password"
 }
 
+get_current_rcon_password() {
+  local server_name=$1
+  
+  if [ -f "$RCONRC" ] && grep -q "^\[$server_name\]" "$RCONRC" 2>/dev/null; then
+    # Extract password from the section
+    awk -v section="$server_name" '
+      /^\[/ { in_section=0 }
+      $0 == "["section"]" { in_section=1 }
+      in_section && /^password = / { sub(/^password = /, ""); print; exit }
+    ' "$RCONRC"
+  else
+    echo ""
+  fi
+}
+
 # Function to update .rconrc
 update_rconrc() {
   local server_name=$1
@@ -114,12 +129,32 @@ EOF
 # Function to notify server via rcon
 notify_server() {
   local server_name=$1
-    
+  local new_password=$2
+  local old_password=$3
+  local hostname=$4
+  local port=$5
+  
+  local message="Server configs updated, change map for them to take effect"
+  
   if command -v rcon &> /dev/null; then
     _debug "${FUNCNAME[0]}" "Notifying server via rcon..."
-    rcon -s "$server_name" say "Server configs updated, change map for them to take effect" || {
+    
+    # Try with new password via .rconrc first
+    if rcon -s "$server_name" say "$message" 2>/dev/null; then
+      _debug "${FUNCNAME[0]}" "✓ Successfully notified via new password"
+      return 0
+    fi
+    
+    # If that fails and we have an old password, try with old password directly
+    if [ -n "$old_password" ] && [ "$old_password" != "$new_password" ]; then
+      _debug "${FUNCNAME[0]}" "Retrying with old password..."
+      if rcon -H "$hostname" -p "$port" -P "$old_password" say "$message" 2>/dev/null; then
+        _debug "${FUNCNAME[0]}" "✓ Successfully notified via old password (password was changed)"
+        return 0
+      fi
+    fi
+    
     _error "${FUNCNAME[0]}" "⚠ Warning: Failed to send rcon notification to $server_name"
-    }
   else
     _error "${FUNCNAME[0]}" "⚠ Warning: rcon command not found, skipping notification"
   fi
@@ -148,6 +183,11 @@ main() {
       _error "${FUNCNAME[0]}" "⚠ Warning: Server path does not exist, skipping"
       continue
     fi
+
+    # Get the current rcon password before updating
+    old_rcon_password=$(get_current_rcon_password "$server_name")
+    _debug "${FUNCNAME[0]}" "Old rcon password retrieved: ${old_rcon_password:+[set]}"
+    
       
     # Rsync tf directory
     _debug "${FUNCNAME[0]}" "Syncing tf directory..."
@@ -166,7 +206,7 @@ main() {
     _debug "${FUNCNAME[0]}" "✓ Updated .rconrc"
       
     # Notify server
-    notify_server "$server_name"
+    notify_server "$server_name" "$new_rcon_password" "$old_rcon_password" "tf2.lumabyte.io" "$port"
       
     _info "${FUNCNAME[0]}" "✓ Deployment complete for $server_name"
   done

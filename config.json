@@ -1,6 +1,7 @@
 [
   {
     "name": "pugB",
-    "path": "/home/steam/servers/tf2/pugB"
+    "path": "/home/steam/servers/tf2/pugB",
+    "port": "27016"
   }
 ]

@@ -42,15 +42,17 @@ jobs:
         
         scp -i ~/.ssh/deploy_key -P 2222 /tmp/deploy_script.sh steam@tf2.lumabyte.io:/tmp/deploy_script.sh
         
-        ssh -i ~/.ssh/deploy_key -p 2222 steam@tf2.lumabyte.io \
-          "export DEMOSTF_APIKEY='${DEMOSTF_APIKEY}'; \
-           export LOGSTF_APIKEY='${LOGSTF_APIKEY}'; \
-           export SV_PASSWORD='${SV_PASSWORD}'; \
-           export PUGA_RCON='${PUGA_RCON}'; \
-           export PUGB_RCON='${PUGB_RCON}'; \
-           export PUGA_HOSTNAME='${PUGA_HOSTNAME}'; \
-           export PUGB_HOSTNAME='${PUGB_HOSTNAME}'; \
-           bash /tmp/deploy_script.sh && rm /tmp/deploy_script.sh"
+        ssh -i ~/.ssh/deploy_key -p 2222 steam@tf2.lumabyte.io bash << 'EOF'
+        export DEMOSTF_APIKEY='${{ secrets.DEMOSTF_APIKEY }}'
+        export LOGSTF_APIKEY='${{ secrets.LOGSTF_APIKEY }}'
+        export SV_PASSWORD='${{ secrets.SV_PASSWORD }}'
+        export PUGA_RCON='${{ secrets.PUGA_RCON }}'
+        export PUGB_RCON='${{ secrets.PUGB_RCON }}'
+        export PUGA_HOSTNAME='${{ vars.PUGA_HOSTNAME }}'
+        export PUGB_HOSTNAME='${{ vars.PUGB_HOSTNAME }}'
+        bash /tmp/deploy_script.sh
+        rm /tmp/deploy_script.sh
+        EOF
 
     - name: Cleanup
       if: always()
