@@ -109,7 +109,7 @@ notify_server() {
   fi
 }
 
-main() {`
+main() {
   _info "${FUNCNAME[0]}" "Starting deployment..."
   _debug "${FUNCNAME[0]}" "Source: ${TF_SOURCE}"
   
