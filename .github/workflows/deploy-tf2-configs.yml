@@ -30,15 +30,27 @@ jobs:
         PUGA_HOSTNAME: ${{ vars.PUGA_HOSTNAME }}
         PUGB_HOSTNAME: ${{ vars.PUGB_HOSTNAME }}
       run: |
+        cat > /tmp/deploy_script.sh << 'SCRIPT_EOF'
+        #!/bin/bash
+        set -e
+        cd ~/servers/tf2/tf2-passtime-config
+        git remote set-url origin https://github.com/${{ github.repository }}.git
+        git pull origin main
+        chmod +x deploy.sh
+        ./deploy.sh 2>&1
+        SCRIPT_EOF
+        
+        scp -i ~/.ssh/deploy_key -P 2222 /tmp/deploy_script.sh steam@tf2.lumabyte.io:/tmp/deploy_script.sh
+        
         ssh -i ~/.ssh/deploy_key -p 2222 steam@tf2.lumabyte.io \
-          DEMOSTF_APIKEY="$DEMOSTF_APIKEY" \
-          LOGSTF_APIKEY="$LOGSTF_APIKEY" \
-          SV_PASSWORD="$SV_PASSWORD" \
-          PUGA_RCON="$PUGA_RCON" \
-          PUGB_RCON="$PUGB_RCON" \
-          PUGA_HOSTNAME="$PUGA_HOSTNAME" \
-          PUGB_HOSTNAME="$PUGB_HOSTNAME" \
-          'cd ~/servers/tf2/tf2-passtime-config && git remote set-url origin https://github.com/${{ github.repository }}.git && git pull origin main && ./deploy.sh 2>&1'
+          "export DEMOSTF_APIKEY='${DEMOSTF_APIKEY}'; \
+           export LOGSTF_APIKEY='${LOGSTF_APIKEY}'; \
+           export SV_PASSWORD='${SV_PASSWORD}'; \
+           export PUGA_RCON='${PUGA_RCON}'; \
+           export PUGB_RCON='${PUGB_RCON}'; \
+           export PUGA_HOSTNAME='${PUGA_HOSTNAME}'; \
+           export PUGB_HOSTNAME='${PUGB_HOSTNAME}'; \
+           bash /tmp/deploy_script.sh && rm /tmp/deploy_script.sh"
 
     - name: Cleanup
       if: always()
