@@ -24,8 +24,9 @@ _error() {
 
 # Function to escape special characters for sed replacement string
 escape_for_sed() {
-    # Escape backslashes, forward slashes, ampersands, and newlines
-    printf '%s\n' "$1" | sed -e 's/[\/&]/\\&/g' | sed ':a;N;$!ba;s/\n/\\n/g'
+    local input="$1"
+    # Escape backslashes first, then forward slashes, ampersands, and pipes
+    printf '%s' "$input" | sed -e 's/\\/\\\\/g' -e 's/\//\\\//g' -e 's/&/\\\&/g' -e 's/|/\\|/g'
 }
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -174,9 +175,11 @@ main() {
   for i in $(seq 0 $((server_count - 1))); do
     server_name=$(jq -r ".[$i].name" "$CONFIG_FILE")
     server_path=$(jq -r ".[$i].path" "$CONFIG_FILE")
+    port=$(jq -r ".[$i].port" "$CONFIG_FILE")
       
     _info "${FUNCNAME[0]}" "[$((i + 1))/$server_count] Deploying to: $server_name"
     _info "${FUNCNAME[0]}" "Path: $server_path"
+    _info "${FUNCNAME[0]}" "Port: $port"
       
     # Check if server path exists
     if [ ! -d "$server_path" ]; then
@@ -191,18 +194,15 @@ main() {
       
     # Rsync tf directory
     _debug "${FUNCNAME[0]}" "Syncing tf directory..."
-    rsync -av "$TF_SOURCE/" "$server_path/tf/"
+    rsync -a "$TF_SOURCE/" "$server_path/tf/"
     _debug "${FUNCNAME[0]}" "✓ Files synced"
       
     # Update server.cfg with secrets
-    rcon_password=$(update_server_cfg "$server_name" "$server_path")
-    SHARED_RCON_PASSWORD="$rcon_password"
-      
-    # Just doing a simple increment for now, can also add this to config.json
-    port=$((27015 + i))
+    new_rcon_password=$(update_server_cfg "$server_name" "$server_path")
+    SHARED_RCON_PASSWORD="$new_rcon_password"
       
     # Update .rconrc
-    update_rconrc "$server_name" "$rcon_password" "tf2.lumabyte.io" "$port"
+    update_rconrc "$server_name" "$new_rcon_password" "tf2.lumabyte.io" "$port"
     _debug "${FUNCNAME[0]}" "✓ Updated .rconrc"
       
     # Notify server
