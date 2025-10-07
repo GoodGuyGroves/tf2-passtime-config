@@ -91,7 +91,7 @@ EOF
   else
     # Update existing entry
     _debug "${FUNCNAME[0]}" "Updating rconrc entry for $server_name..."
-    sed -i "|^\[$server_name\]|,|^\[| s|^password = .*|password = $rcon_password|" "$RCONRC"
+    sed -i "/^\[$server_name\]/,/^\[/ s|^password = .*|password = $rcon_password|" "$RCONRC"
   fi
 }
 
