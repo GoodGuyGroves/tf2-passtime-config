@@ -10,16 +10,16 @@ set -o pipefail
 debug_mode=0
 _debug() {
     if (( "${debug_mode}" == 0 )); then
-        printf "[DEBUG]\t $(date +%T) %s - %s\n" "${1}" "${2}"
+        printf "[DEBUG]\t $(date +%T) %s - %s\n" "${1}" "${2}" >&2
     fi
 }
 
 _info() {
-    printf "[INFO]\t $(date +%T) %s - %s\n" "${1}" "${2}"
+    printf "[INFO]\t $(date +%T) %s - %s\n" "${1}" "${2}" >&2
 }
 
 _error() {
-    printf "[ERROR]\t $(date +%T) %s - %s\n" "${1}" "${2}"
+    printf "[ERROR]\t $(date +%T) %s - %s\n" "${1}" "${2}" >&2
 }
 
 # Function to escape special characters for sed replacement string
