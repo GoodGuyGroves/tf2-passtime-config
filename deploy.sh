@@ -59,11 +59,11 @@ update_server_cfg() {
   _debug "${FUNCNAME[0]}" "Updating $server_cfg..."
     
   # Use sed to replace the values
-  sed -i "s/^hostname[[:space:]]*\".*\"/hostname                       \"$hostname\"/" "$server_cfg"
-  sed -i "s/^sv_password[[:space:]]*\".*\"/sv_password                    \"$SV_PASSWORD\"/" "$server_cfg"
-  sed -i "s/^rcon_password[[:space:]]*\".*\"/rcon_password                  \"$rcon_password\"/" "$server_cfg"
-  sed -i "s/^sm_demostf_apikey[[:space:]]*\".*\"/sm_demostf_apikey              \"$DEMOSTF_APIKEY\"/" "$server_cfg"
-  sed -i "s/^logstf_apikey[[:space:]]*\".*\"/logstf_apikey                  \"$LOGSTF_APIKEY\"/" "$server_cfg"
+  sed -i "s|^hostname[[:space:]]*\".*\"|hostname                       \"$hostname\"|" "$server_cfg"
+  sed -i "s|^sv_password[[:space:]]*\".*\"|sv_password                    \"$SV_PASSWORD\"|" "$server_cfg"
+  sed -i "s|^rcon_password[[:space:]]*\".*\"|rcon_password                  \"$rcon_password\"|" "$server_cfg"
+  sed -i "s|^sm_demostf_apikey[[:space:]]*\".*\"|sm_demostf_apikey              \"$DEMOSTF_APIKEY\"|" "$server_cfg"
+  sed -i "s|^logstf_apikey[[:space:]]*\".*\"|logstf_apikey                  \"$LOGSTF_APIKEY\"|" "$server_cfg"
 
   _debug "${FUNCNAME[0]}" "✓ Updated secrets in server.cfg"
     
@@ -91,7 +91,7 @@ EOF
   else
     # Update existing entry
     _debug "${FUNCNAME[0]}" "Updating rconrc entry for $server_name..."
-    sed -i "/^\[$server_name\]/,/^\[/ s/^password = .*/password = $rcon_password/" "$RCONRC"
+    sed -i "|^\[$server_name\]|,|^\[| s|^password = .*|password = $rcon_password|" "$RCONRC"
   fi
 }
 
