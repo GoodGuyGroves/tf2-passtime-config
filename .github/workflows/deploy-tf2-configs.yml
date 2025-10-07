@@ -41,6 +41,7 @@ jobs:
           cd ~/servers/tf2/tf2-passtime-config
           git remote set-url origin https://github.com/${{ github.repository }}.git
           git pull origin main
+          git remote set-url origin git@github.com:${{ github.repository }}.git
           chmod +x deploy.sh
           ./deploy.sh 2>&1
         ENDSSH
