@@ -30,7 +30,7 @@ jobs:
         PUGA_HOSTNAME: ${{ vars.PUGA_HOSTNAME }}
         PUGB_HOSTNAME: ${{ vars.PUGB_HOSTNAME }}
       run: |
-        ssh -i ~/.ssh/deploy_key -p 2222 steam@tf2.lumabyte.io bash << 'ENDSSH'
+        ssh -i ~/.ssh/deploy_key -p 2222 steam@tf2.lumabyte.io bash -s << 'ENDSSH'
           export DEMOSTF_APIKEY="$DEMOSTF_APIKEY"
           export LOGSTF_APIKEY="$LOGSTF_APIKEY"
           export SV_PASSWORD="$SV_PASSWORD"
@@ -42,7 +42,7 @@ jobs:
           git remote set-url origin https://github.com/${{ github.repository }}.git
           git pull origin main
           chmod +x deploy.sh
-          ./deploy.sh
+          ./deploy.sh 2>&1
         ENDSSH
 
     - name: Cleanup
