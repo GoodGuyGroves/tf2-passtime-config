@@ -86,9 +86,6 @@ update_rconrc() {
   local rcon_password=$2
   local hostname=$3
   local port=$4
-  
-  # Escape the password for sed
-  local rcon_password_escaped=$(escape_for_sed "$rcon_password")
     
   # Check if section exists, if not create it
   if ! grep -q "^\[$server_name\]" "$RCONRC" 2>/dev/null; then
@@ -103,7 +100,14 @@ EOF
   else
     # Update existing entry
     _debug "${FUNCNAME[0]}" "Updating rconrc entry for $server_name..."
-    sed -i "/^\[$server_name\]/,/^\[/ s|^password = .*|password = $rcon_password_escaped|" "$RCONRC"
+    
+    # Use awk to update the password in the specific section
+    awk -v section="$server_name" -v pass="$rcon_password" '
+      /^\[/ { in_section=0 }
+      $0 == "["section"]" { in_section=1 }
+      in_section && /^password = / { print "password = " pass; next }
+      { print }
+    ' "$RCONRC" > "$RCONRC.tmp" && mv "$RCONRC.tmp" "$RCONRC"
   fi
 }
 
