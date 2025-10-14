@@ -1,5 +1,10 @@
 [
   {
+    "name": "pugA",
+    "path": "/home/steam/servers/tf2/pugA",
+    "port": "27015"
+  },
+  {
     "name": "pugB",
     "path": "/home/steam/servers/tf2/pugB",
     "port": "27016"
